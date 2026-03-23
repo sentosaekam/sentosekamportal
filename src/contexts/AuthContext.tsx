@@ -32,19 +32,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     let mounted = true
 
-    void supabase.auth.getSession().then(({ data: { session: s } }) => {
-      if (!mounted) return
-      setSession(s)
-      setUser(s?.user ?? null)
-      if (s?.user) {
-        void fetchProfile(s.user.id).then((p) => {
-          if (mounted) setProfile(p)
-        })
-      } else {
-        setProfile(null)
-      }
-      setLoading(false)
-    })
+    void supabase.auth
+      .getSession()
+      .then(({ data: { session: s } }) => {
+        if (!mounted) return
+        setSession(s)
+        setUser(s?.user ?? null)
+        if (s?.user) {
+          void fetchProfile(s.user.id).then((p) => {
+            if (mounted) setProfile(p)
+          })
+        } else {
+          setProfile(null)
+        }
+        setLoading(false)
+      })
+      .catch((err) => {
+        console.error('getSession', err)
+        if (mounted) setLoading(false)
+      })
 
     const {
       data: { subscription },

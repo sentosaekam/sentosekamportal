@@ -74,9 +74,12 @@ For a minimal workflow without extra services: new users appear under **Admin �
 
 ## Blank page on Vercel?
 
-1. **Vercel → Project → Settings → General → Build & Output Settings**
-   - **Framework Preset:** Vite (or “Other” with build `npm run build`).
-   - **Output Directory:** must be **`dist`** (Vite’s output — not `build`).
-2. **Environment Variables** (Settings → Environment Variables): add **`VITE_SUPABASE_URL`** and **`VITE_SUPABASE_ANON_KEY`** for **Production** (and Preview if you use previews). Redeploy after saving.
-3. In the browser, open **DevTools (F12) → Network**: reload and confirm **`/assets/index-….js`** returns **200** (not HTML). If the main JS is 404 or returns HTML, the deployment output is wrong — fix Output Directory and redeploy.
-4. **Supabase → Authentication → URL configuration:** set **Site URL** to `https://sentosekamportal.vercel.app` (your real URL) so auth redirects work after login.
+1. **Environment variables (most common):** Vite bakes `VITE_*` into the **build**. In **Vercel → Settings → Environment Variables**, add **`VITE_SUPABASE_URL`** and **`VITE_SUPABASE_ANON_KEY`** for **Production** (same values as local `.env`), then **Redeploy**. If they are missing, older versions could crash at startup; the app now degrades gracefully, but auth still won’t work until these are set.
+2. **Vercel → Settings → General → Build & Output Settings**
+   - **Framework Preset:** **Vite** (not “Create React App”).
+   - **Output Directory:** **`dist`** (override on if needed). CRA uses `build`; Vite uses `dist`.
+   - **Development Command:** e.g. `npm run dev` or `vite` (not `react-scripts start`).
+3. If the dashboard says *Production deployment differs from Project Settings*, align the **Project Settings** with the working production values (Vite + `dist`) and save.
+4. In the browser **DevTools → Network**, reload and confirm **`/assets/index-….js`** returns **200** (JavaScript, not HTML).
+5. **Supabase → Authentication → URL configuration:** set **Site URL** to your live URL (e.g. `https://sentosekamportal.vercel.app`).
+

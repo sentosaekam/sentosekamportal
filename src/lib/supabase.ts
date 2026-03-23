@@ -7,15 +7,27 @@ const key = (import.meta.env.VITE_SUPABASE_ANON_KEY ?? '').trim()
 
 export const supabaseConfigured = Boolean(url && key)
 
-export const supabase = createClient(url, key, {
-  auth: {
-    persistSession: true,
-    autoRefreshToken: true,
-    detectSessionInUrl: true,
+// createClient('', '') throws at import time ("supabaseUrl is required") → blank page on Vercel
+// if env vars are missing from the build. Use placeholders only so the module loads; when
+// supabaseConfigured is false, AuthProvider skips real auth calls.
+const PLACEHOLDER_URL = 'https://placeholder.supabase.co'
+const PLACEHOLDER_KEY =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS1kZW1vIiwicm9sZSI6ImFub24iLCJleHAiOjE5ODM4MTI5OTZ9.CRXP1A7WOeoJeXxjNni43kdQwgnWNReilDMblYTn_I0'
+
+export const supabase = createClient(
+  supabaseConfigured ? url : PLACEHOLDER_URL,
+  supabaseConfigured ? key : PLACEHOLDER_KEY,
+  {
+    auth: {
+      persistSession: supabaseConfigured,
+      autoRefreshToken: supabaseConfigured,
+      detectSessionInUrl: supabaseConfigured,
+    },
   },
-})
+)
 
 export async function fetchProfile(userId: string): Promise<Profile | null> {
+  if (!supabaseConfigured) return null
   const { data, error } = await supabase
     .from('profiles')
     .select('*')
