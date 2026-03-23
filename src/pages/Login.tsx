@@ -9,10 +9,14 @@ import { supabase, supabaseConfigured } from '../lib/supabase'
 export function LoginPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { user, profile, loading: authLoading } = useAuth()
+  const { user, profile, loading: authLoading, refreshProfile } = useAuth()
 
   useEffect(() => {
-    if (authLoading || !user || !profile) return
+    if (authLoading || !user) return
+    if (!profile) {
+      navigate('/account-issue', { replace: true })
+      return
+    }
     if (profile.role === 'pending') navigate('/pending', { replace: true })
     else navigate('/app', { replace: true })
   }, [authLoading, user, profile, navigate])
@@ -30,15 +34,22 @@ export function LoginPage() {
       email,
       password,
     })
-    setLoading(false)
     if (err) {
+      setLoading(false)
       const m = err.message ?? ''
       const isNetwork =
         /failed to fetch|networkerror|load failed|network request failed/i.test(m)
       setError(isNetwork ? t('common.networkError') : t('auth.invalidCredentials'))
       return
     }
-    navigate('/app')
+    const p = await refreshProfile()
+    setLoading(false)
+    if (!p) {
+      navigate('/account-issue', { replace: true })
+      return
+    }
+    if (p.role === 'pending') navigate('/pending', { replace: true })
+    else navigate('/app', { replace: true })
   }
 
   return (

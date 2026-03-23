@@ -7,7 +7,7 @@ export type AuthState = {
   user: User | null
   profile: Profile | null
   loading: boolean
-  refreshProfile: () => Promise<void>
+  refreshProfile: () => Promise<Profile | null>
 }
 
 export const AuthContext = createContext<AuthState | undefined>(undefined)

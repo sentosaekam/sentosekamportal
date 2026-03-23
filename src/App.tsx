@@ -15,6 +15,7 @@ import { ContactsPage } from './pages/Contacts'
 import { LandmarksPage } from './pages/Landmarks'
 import { MarketplacePage } from './pages/Marketplace'
 import { AdminPage } from './pages/Admin'
+import { AccountIssuePage } from './pages/AccountIssue'
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth()
@@ -27,7 +28,7 @@ function RequireMember({ children }: { children: ReactNode }) {
   const { user, profile, loading } = useAuth()
   if (loading) return <LoadingScreen />
   if (!user) return <Navigate to="/login" replace />
-  if (!profile) return <LoadingScreen />
+  if (!profile) return <Navigate to="/account-issue" replace />
   if (profile.role === 'pending') return <Navigate to="/pending" replace />
   if (profile.role !== 'member' && profile.role !== 'admin') {
     return <Navigate to="/pending" replace />
@@ -39,7 +40,7 @@ function RequirePending({ children }: { children: ReactNode }) {
   const { user, profile, loading } = useAuth()
   if (loading) return <LoadingScreen />
   if (!user) return <Navigate to="/login" replace />
-  if (!profile) return <LoadingScreen />
+  if (!profile) return <Navigate to="/account-issue" replace />
   if (profile.role !== 'pending') return <Navigate to="/app" replace />
   return children
 }
@@ -52,6 +53,14 @@ export default function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route
+          path="/account-issue"
+          element={
+            <RequireAuth>
+              <AccountIssuePage />
+            </RequireAuth>
+          }
+        />
         <Route
           path="/pending"
           element={

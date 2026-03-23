@@ -59,7 +59,12 @@
     "noAccount": "Need access?",
     "hasAccount": "Already have an account?",
     "checkEmail": "Check your email to confirm your account if required.",
-    "invalidCredentials": "Invalid email or password."
+    "invalidCredentials": "Invalid email or password.",
+    "accountIssueTitle": "We couldn’t load your society profile",
+    "accountIssueBody": "You’re signed in, but there is no matching row in the members list yet. This can happen right after email confirmation or if the database trigger didn’t run.",
+    "accountIssueHint1": "Tap Retry after a few seconds if you just confirmed your email.",
+    "accountIssueHint2": "If it keeps happening, contact the committee — they may need to approve your access or fix your record in the admin panel.",
+    "retry": "Retry"
   },
   "pending": {
     "title": "Awaiting approval",

@@ -12,7 +12,11 @@ export function RegisterPage() {
   const { user, profile, loading: authLoading } = useAuth()
 
   useEffect(() => {
-    if (authLoading || !user || !profile) return
+    if (authLoading || !user) return
+    if (!profile) {
+      navigate('/account-issue', { replace: true })
+      return
+    }
     if (profile.role === 'pending') navigate('/pending', { replace: true })
     else navigate('/app', { replace: true })
   }, [authLoading, user, profile, navigate])

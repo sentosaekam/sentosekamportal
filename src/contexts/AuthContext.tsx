@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react'
 import type { Session, User } from '@supabase/supabase-js'
 import { fetchProfile, supabase, supabaseConfigured } from '../lib/supabase'
 import type { Profile } from '../types/database'
@@ -9,19 +16,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [profile, setProfile] = useState<Profile | null>(null)
   const [loading, setLoading] = useState(true)
+  const prevUserIdRef = useRef<string | null>(null)
 
-  const refreshProfile = useCallback(async () => {
+  const refreshProfile = useCallback(async (): Promise<Profile | null> => {
     if (!supabaseConfigured) {
       setProfile(null)
-      return
+      return null
     }
     const u = (await supabase.auth.getUser()).data.user
     if (!u) {
       setProfile(null)
-      return
+      return null
     }
     const p = await fetchProfile(u.id)
     setProfile(p)
+    return p
   }, [])
 
   useEffect(() => {
@@ -32,38 +41,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     let mounted = true
 
-    void supabase.auth
-      .getSession()
-      .then(({ data: { session: s } }) => {
-        if (!mounted) return
-        setSession(s)
-        setUser(s?.user ?? null)
-        if (s?.user) {
-          void fetchProfile(s.user.id).then((p) => {
-            if (mounted) setProfile(p)
-          })
-        } else {
-          setProfile(null)
-        }
-        setLoading(false)
-      })
-      .catch((err) => {
-        console.error('getSession', err)
-        if (mounted) setLoading(false)
-      })
+    async function syncFromSession(s: Session | null) {
+      const uid = s?.user?.id ?? null
+      const userChanged = uid !== prevUserIdRef.current
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s)
       setUser(s?.user ?? null)
       if (s?.user) {
-        void fetchProfile(s.user.id).then((p) => {
-          if (mounted) setProfile(p)
-        })
+        prevUserIdRef.current = uid
+        if (userChanged) setLoading(true)
+        const p = await fetchProfile(s.user.id)
+        if (mounted) {
+          setProfile(p)
+          setLoading(false)
+        }
       } else {
-        setProfile(null)
+        prevUserIdRef.current = null
+        if (mounted) {
+          setProfile(null)
+          setLoading(false)
+        }
       }
+    }
+
+    void supabase.auth.getSession().then(async ({ data: { session: s } }) => {
+      await syncFromSession(s)
+    })
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, s) => {
+      await syncFromSession(s)
     })
 
     return () => {
