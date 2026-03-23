@@ -29,6 +29,7 @@ If a trigger fails to create (rare Postgres version differences), try replacing 
 7. **Extra SQL migrations** (run once in SQL Editor, in order):
    - `supabase/migration_profiles_select_for_members.sql` — so members can see who booked the hall (name + flat).
    - `supabase/migration_email_on_profiles.sql` — stores login email on `profiles` for the Admin table.
+   - `supabase/migration_ensure_my_profile.sql` — creates `ensure_my_profile()` so users without a `profiles` row (missing trigger) get a row on next load; run this if people see “couldn’t load your society profile” while signed in.
 
 ### How to log in (committee)
 

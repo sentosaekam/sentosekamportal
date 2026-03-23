@@ -7,7 +7,7 @@ import {
   type ReactNode,
 } from 'react'
 import type { Session, User } from '@supabase/supabase-js'
-import { fetchProfile, supabase, supabaseConfigured } from '../lib/supabase'
+import { fetchProfileWithEnsure, supabase, supabaseConfigured } from '../lib/supabase'
 import type { Profile } from '../types/database'
 import { AuthContext } from './auth-context'
 
@@ -28,7 +28,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setProfile(null)
       return null
     }
-    const p = await fetchProfile(u.id)
+    const p = await fetchProfileWithEnsure(u.id)
     setProfile(p)
     return p
   }, [])
@@ -50,7 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (s?.user) {
         prevUserIdRef.current = uid
         if (userChanged) setLoading(true)
-        const p = await fetchProfile(s.user.id)
+        const p = await fetchProfileWithEnsure(s.user.id)
         if (mounted) {
           setProfile(p)
           setLoading(false)

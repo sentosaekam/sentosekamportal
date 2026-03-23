@@ -40,3 +40,20 @@ export async function fetchProfile(userId: string): Promise<Profile | null> {
   }
   return data as Profile | null
 }
+
+/**
+ * If a session exists but `profiles` has no row (missing trigger / old DB), the RPC
+ * `ensure_my_profile` creates one. Requires `supabase/migration_ensure_my_profile.sql` on the project.
+ */
+export async function fetchProfileWithEnsure(userId: string): Promise<Profile | null> {
+  if (!supabaseConfigured) return null
+  let p = await fetchProfile(userId)
+  if (p) return p
+  const { error } = await supabase.rpc('ensure_my_profile')
+  if (error) {
+    console.error('ensure_my_profile', error)
+    return null
+  }
+  p = await fetchProfile(userId)
+  return p
+}
