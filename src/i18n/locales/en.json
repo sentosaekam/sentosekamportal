@@ -89,7 +89,8 @@
     "invalidRange": "End time must be after start time.",
     "overlapError": "This time overlaps an existing booking. Choose another slot.",
     "booked": "Booked successfully",
-    "remove": "Cancel booking"
+    "remove": "Cancel booking",
+    "bookedBy": "Booked by: {{name}} · Flat {{flat}}"
   },
   "parking": {
     "title": "Parking stickers",
@@ -152,6 +153,7 @@
     "landmarks": "Manage landmarks",
     "addContact": "Add contact",
     "addLandmark": "Add landmark",
-    "promoteAdmin": "Set admin"
+    "promoteAdmin": "Set admin",
+    "emailHelp": "Emails appear after you run supabase/migration_email_on_profiles.sql in the SQL Editor (one-time)."
   }
 }

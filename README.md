@@ -13,17 +13,30 @@ React + Vite + Tailwind CSS + Supabase. Features: common hall booking (overlap c
 2. Open **SQL Editor**, paste the contents of `supabase/schema.sql`, and run it.
 3. **Authentication → Providers → Email**: enable Email. Configure **Site URL** to your deployed app URL (e.g. `https://your-app.vercel.app`). Add the same URL under **Redirect URLs** if needed.
 4. **Optional — disable email confirmation** for testing: Authentication → Providers → Email → turn off “Confirm email”. For production, keep confirmation enabled.
-5. **First admin**: sign up once through the app, then in SQL Editor run (replace the email):
-
-   ```sql
-   update public.profiles
-   set role = 'admin'
-   where id = (select id from auth.users where email = 'you@example.com' limit 1);
-   ```
-
-   After that, you can approve pending users and manage contacts/landmarks from **Admin** in the app.
+5. Sign up once via **Request access** (or use an existing account) for the committee Gmail you will use to log in.
 
 If a trigger fails to create (rare Postgres version differences), try replacing `execute function` with `execute procedure` in the two trigger definitions at the bottom of `schema.sql`, then run again.
+
+6. **One committee admin email** (optional but recommended): In `.env` set `VITE_COMMITTEE_ADMIN_EMAIL` to the same Gmail/login the committee uses. Add the same variable on **Vercel**. Only that user will see **Admin** in the app (approve access, manage contacts/landmarks, see all residents). Then run in **SQL Editor** (replace with your committee email):
+
+   ```sql
+   update public.profiles set role = 'member' where role = 'admin';
+
+   update public.profiles set role = 'admin'
+   where id = (select id from auth.users where email = 'sentosaekampunawale@gmail.com' limit 1);
+   ```
+
+7. **Extra SQL migrations** (run once in SQL Editor, in order):
+   - `supabase/migration_profiles_select_for_members.sql` — so members can see who booked the hall (name + flat).
+   - `supabase/migration_email_on_profiles.sql` — stores login email on `profiles` for the Admin table.
+
+### How to log in (committee)
+
+1. Open **Sign in** (`/login`).
+2. Use **Email** and **Password** for `sentosaekampunawale@gmail.com` (the account must exist — register first if needed).
+3. After the SQL above, that user has **Admin** and can open **Admin** from the sidebar to **approve** pending users and see **all residents** (with email after migration), hall list shows **Booked by: name · flat**.
+
+**Notifications:** Supabase sends signup/reset emails to the **applicant’s** address, not automatically to the committee inbox. To also email `VITE_SOCIETY_NOTIFY_EMAIL` on each signup, you’d add a small **Edge Function** or **webhook** (e.g. Resend) — not included in the default app.
 
 ## 2. Local environment
 
@@ -37,6 +50,7 @@ Edit `.env` and set:
 - `VITE_SUPABASE_URL` — **Project Settings → API → Project URL**
 - `VITE_SUPABASE_ANON_KEY` — **anon public** key (never commit the service role key)
 - `VITE_SOCIETY_NOTIFY_EMAIL` *(optional)* — society / committee email; shown on the home page (set the same on Vercel for production)
+- `VITE_COMMITTEE_ADMIN_EMAIL` *(recommended)* — only this login email may open **Admin** (must match Supabase Auth email; set on Vercel too)
 
 ```bash
 npm install

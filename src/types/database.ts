@@ -5,6 +5,8 @@ export interface Profile {
   full_name: string
   flat_number: string
   phone: string | null
+  /** Synced from auth — run `supabase/migration_email_on_profiles.sql` if column missing */
+  email?: string | null
   role: UserRole
   created_at: string
   updated_at: string

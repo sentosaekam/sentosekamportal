@@ -2,15 +2,20 @@ import { useCallback, useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { format, parseISO } from 'date-fns'
 import { useAuth } from '../hooks/useAuth'
+import { isCommitteeAdmin } from '../lib/committeeAdmin'
 import { supabase } from '../lib/supabase'
 import { rangesOverlap } from '../lib/hall'
 import type { HallBooking } from '../types/database'
 import { Button, Card, Input } from '../components/ui'
 
+type BookingRow = HallBooking & {
+  profiles: { full_name: string; flat_number: string } | null
+}
+
 export function HallBookingPage() {
   const { t } = useTranslation()
   const { user, profile } = useAuth()
-  const [bookings, setBookings] = useState<HallBooking[]>([])
+  const [bookings, setBookings] = useState<BookingRow[]>([])
   const [loading, setLoading] = useState(true)
   const [start, setStart] = useState('')
   const [end, setEnd] = useState('')
@@ -21,9 +26,9 @@ export function HallBookingPage() {
   const load = useCallback(async () => {
     const { data, error: err } = await supabase
       .from('hall_bookings')
-      .select('*')
+      .select('*, profiles(full_name, flat_number)')
       .order('start_at', { ascending: true })
-    if (!err && data) setBookings(data as HallBooking[])
+    if (!err && data) setBookings(data as BookingRow[])
     setLoading(false)
   }, [])
 
@@ -139,8 +144,16 @@ export function HallBookingPage() {
                   <p className="text-sm text-stone-600">
                     {format(parseISO(b.start_at), 'PPp')} — {format(parseISO(b.end_at), 'PPp')}
                   </p>
+                  {b.profiles && (
+                    <p className="mt-1 text-sm text-stone-700">
+                      {t('hall.bookedBy', {
+                        name: b.profiles.full_name,
+                        flat: b.profiles.flat_number || '—',
+                      })}
+                    </p>
+                  )}
                 </div>
-                {(b.user_id === user?.id || profile?.role === 'admin') && (
+                {(b.user_id === user?.id || isCommitteeAdmin(user, profile)) && (
                   <Button variant="danger" onClick={() => void removeBooking(b.id)}>
                     {t('hall.remove')}
                   </Button>

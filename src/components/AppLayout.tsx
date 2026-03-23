@@ -13,14 +13,15 @@ import {
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useAuth } from '../hooks/useAuth'
+import { isCommitteeAdmin } from '../lib/committeeAdmin'
 import { supabase } from '../lib/supabase'
 import { LanguageSwitcher } from './LanguageSwitcher'
 import { Button } from './ui'
 
 export function AppLayout() {
   const { t } = useTranslation()
-  const { profile } = useAuth()
-  const isAdmin = profile?.role === 'admin'
+  const { user, profile } = useAuth()
+  const showAdmin = isCommitteeAdmin(user, profile)
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     clsx(
@@ -83,7 +84,7 @@ export function AppLayout() {
             <ShoppingBag className="h-4 w-4 shrink-0" />
             {t('nav.market')}
           </NavLink>
-          {isAdmin && (
+          {showAdmin && (
             <NavLink to="/app/admin" className={linkClass}>
               <Shield className="h-4 w-4 shrink-0" />
               {t('nav.admin')}

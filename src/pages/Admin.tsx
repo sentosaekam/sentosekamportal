@@ -2,13 +2,14 @@ import { useCallback, useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../hooks/useAuth'
+import { isCommitteeAdmin } from '../lib/committeeAdmin'
 import { supabase } from '../lib/supabase'
 import type { Contact, Landmark, LandmarkCategory, Profile } from '../types/database'
 import { Button, Card, Input, TextArea } from '../components/ui'
 
 export function AdminPage() {
   const { t } = useTranslation()
-  const { profile, refreshProfile } = useAuth()
+  const { user, profile, refreshProfile } = useAuth()
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [contacts, setContacts] = useState<Contact[]>([])
   const [landmarks, setLandmarks] = useState<Landmark[]>([])
@@ -37,26 +38,19 @@ export function AdminPage() {
   }, [])
 
   useEffect(() => {
-    if (profile?.role === 'admin') void load()
-  }, [profile?.role, load])
+    if (isCommitteeAdmin(user, profile)) void load()
+  }, [user, profile, load])
 
   if (!profile) {
     return <p className="text-stone-500">{t('common.loading')}</p>
   }
 
-  if (profile.role !== 'admin') {
+  if (!isCommitteeAdmin(user, profile)) {
     return <Navigate to="/app" replace />
   }
 
   async function approve(id: string) {
     await supabase.from('profiles').update({ role: 'member' }).eq('id', id)
-    void load()
-    void refreshProfile()
-  }
-
-  async function makeAdmin(id: string) {
-    if (!confirm(t('admin.promoteAdmin'))) return
-    await supabase.from('profiles').update({ role: 'admin' }).eq('id', id)
     void load()
     void refreshProfile()
   }
@@ -127,6 +121,12 @@ export function AdminPage() {
                     <p className="font-medium text-stone-900">{p.full_name}</p>
                     <p className="text-sm text-stone-600">
                       {p.flat_number} · {p.phone || '—'}
+                      {p.email && (
+                        <>
+                          {' '}
+                          · <span className="font-mono text-xs">{p.email}</span>
+                        </>
+                      )}
                     </p>
                   </div>
                   <Button onClick={() => void approve(p.id)}>{t('admin.approve')}</Button>
@@ -140,13 +140,13 @@ export function AdminPage() {
       <section className="mt-12">
         <h2 className="text-lg font-semibold text-stone-900">{t('admin.allProfiles')}</h2>
         <div className="mt-4 overflow-x-auto rounded-xl border border-stone-200 bg-white">
-          <table className="w-full min-w-[600px] text-left text-sm">
+          <table className="w-full min-w-[640px] text-left text-sm">
             <thead className="border-b border-stone-200 bg-stone-50">
               <tr>
-                <th className="px-4 py-3 font-medium text-stone-700">Name</th>
-                <th className="px-4 py-3 font-medium text-stone-700">Flat</th>
-                <th className="px-4 py-3 font-medium text-stone-700">Role</th>
-                <th className="px-4 py-3 font-medium text-stone-700">Actions</th>
+                <th className="px-4 py-3 font-medium text-stone-700">{t('contacts.name')}</th>
+                <th className="px-4 py-3 font-medium text-stone-700">{t('dashboard.flat')}</th>
+                <th className="px-4 py-3 font-medium text-stone-700">{t('auth.email')}</th>
+                <th className="px-4 py-3 font-medium text-stone-700">{t('dashboard.role')}</th>
               </tr>
             </thead>
             <tbody>
@@ -154,23 +154,14 @@ export function AdminPage() {
                 <tr key={p.id} className="border-b border-stone-100">
                   <td className="px-4 py-3">{p.full_name}</td>
                   <td className="px-4 py-3">{p.flat_number || '—'}</td>
+                  <td className="px-4 py-3 font-mono text-xs">{p.email || '—'}</td>
                   <td className="px-4 py-3">{p.role}</td>
-                  <td className="px-4 py-3">
-                    {p.role !== 'admin' && (
-                      <Button
-                        variant="secondary"
-                        className="!py-1.5 !text-xs"
-                        onClick={() => void makeAdmin(p.id)}
-                      >
-                        {t('admin.promoteAdmin')}
-                      </Button>
-                    )}
-                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
+        <p className="mt-2 text-xs text-stone-500">{t('admin.emailHelp')}</p>
       </section>
 
       <section className="mt-12">

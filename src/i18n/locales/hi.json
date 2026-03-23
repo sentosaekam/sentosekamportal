@@ -89,7 +89,8 @@
     "invalidRange": "समाप्ति समय प्रारंभ के बाद होना चाहिए।",
     "overlapError": "यह समय मौजूदा बुकिंग से टकराता है। दूसरा स्लॉट चुनें।",
     "booked": "सफलतापूर्वक बुक हुआ",
-    "remove": "बुकिंग रद्द करें"
+    "remove": "बुकिंग रद्द करें",
+    "bookedBy": "बुक किया: {{name}} · फ्लैट {{flat}}"
   },
   "parking": {
     "title": "पार्किंग स्टिकर",
@@ -152,6 +153,7 @@
     "landmarks": "स्थान प्रबंधित करें",
     "addContact": "संपर्क जोड़ें",
     "addLandmark": "स्थान जोड़ें",
-    "promoteAdmin": "प्रशासक बनाएँ"
+    "promoteAdmin": "प्रशासक बनाएँ",
+    "emailHelp": "ईमेल दिखाने के लिए एक बार SQL Editor में supabase/migration_email_on_profiles.sql चलाएँ।"
   }
 }
