@@ -3,15 +3,16 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Building2 } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
-import { supabase } from '../lib/supabase'
+import { fetchProfileWithEnsureDetailed, supabase } from '../lib/supabase'
 import { LanguageSwitcher } from '../components/LanguageSwitcher'
 import { Button, Card } from '../components/ui'
 
 export function AccountIssuePage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { profile, loading, refreshProfile } = useAuth()
+  const { user, profile, loading, refreshProfile } = useAuth()
   const [busy, setBusy] = useState(false)
+  const [lastError, setLastError] = useState<string | null>(null)
 
   useEffect(() => {
     if (loading || !profile) return
@@ -39,13 +40,29 @@ export function AccountIssuePage() {
           <ul className="mt-4 list-inside list-disc text-sm text-stone-600">
             <li>{t('auth.accountIssueHint1')}</li>
             <li>{t('auth.accountIssueHint2')}</li>
+            <li>{t('auth.accountIssueHint3')}</li>
           </ul>
+          {lastError && (
+            <p
+              className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800 whitespace-pre-wrap"
+              role="alert"
+            >
+              {lastError}
+            </p>
+          )}
           <div className="mt-6 flex flex-wrap gap-3">
             <Button
               disabled={busy}
               onClick={() => {
+                if (!user) return
                 setBusy(true)
-                void refreshProfile().finally(() => setBusy(false))
+                setLastError(null)
+                void (async () => {
+                  const r = await fetchProfileWithEnsureDetailed(user.id)
+                  await refreshProfile()
+                  if (!r.profile && r.ensureRpcError) setLastError(r.ensureRpcError)
+                  setBusy(false)
+                })()
               }}
             >
               {busy ? t('common.loading') : t('auth.retry')}

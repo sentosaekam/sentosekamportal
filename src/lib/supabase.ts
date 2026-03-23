@@ -46,14 +46,28 @@ export async function fetchProfile(userId: string): Promise<Profile | null> {
  * `ensure_my_profile` creates one. Requires `supabase/migration_ensure_my_profile.sql` on the project.
  */
 export async function fetchProfileWithEnsure(userId: string): Promise<Profile | null> {
-  if (!supabaseConfigured) return null
+  const { profile } = await fetchProfileWithEnsureDetailed(userId)
+  return profile
+}
+
+/** Same as {@link fetchProfileWithEnsure} but returns RPC error text for UI (e.g. account-issue page). */
+export async function fetchProfileWithEnsureDetailed(userId: string): Promise<{
+  profile: Profile | null
+  ensureRpcError: string | null
+}> {
+  if (!supabaseConfigured) return { profile: null, ensureRpcError: null }
   let p = await fetchProfile(userId)
-  if (p) return p
+  if (p) return { profile: p, ensureRpcError: null }
   const { error } = await supabase.rpc('ensure_my_profile')
   if (error) {
     console.error('ensure_my_profile', error)
-    return null
+    return { profile: null, ensureRpcError: error.message }
   }
   p = await fetchProfile(userId)
-  return p
+  if (p) return { profile: p, ensureRpcError: null }
+  return {
+    profile: null,
+    ensureRpcError:
+      'Profile row still missing after ensure_my_profile. Run the SQL backfill in README or check RLS on public.profiles.',
+  }
 }

@@ -31,6 +31,24 @@ If a trigger fails to create (rare Postgres version differences), try replacing 
    - `supabase/migration_email_on_profiles.sql` — stores login email on `profiles` for the Admin table.
    - `supabase/migration_ensure_my_profile.sql` — creates `ensure_my_profile()` so users without a `profiles` row (missing trigger) get a row on next load; run this if people see “couldn’t load your society profile” while signed in.
 
+**If login still shows “couldn’t load your society profile” after that migration:** in SQL Editor run the backfill (creates missing `profiles` rows for every auth user):
+
+```sql
+INSERT INTO public.profiles (id, full_name, flat_number, phone, email, role)
+SELECT
+  u.id,
+  coalesce(nullif(trim(u.raw_user_meta_data->>'full_name'), ''), 'Member'),
+  coalesce(nullif(trim(u.raw_user_meta_data->>'flat_number'), ''), ''),
+  nullif(trim(coalesce(u.raw_user_meta_data->>'phone', '')), ''),
+  u.email,
+  'pending'
+FROM auth.users u
+LEFT JOIN public.profiles p ON p.id = u.id
+WHERE p.id IS NULL;
+```
+
+Also confirm `schema.sql` trigger `on_auth_user_created` on `auth.users` exists so new signups get a row automatically.
+
 ### How to log in (committee)
 
 1. Open **Sign in** (`/login`).
