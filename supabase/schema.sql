@@ -1,4 +1,4 @@
--- Sento Ekam — run in Supabase SQL Editor (new project)
+-- Sentosa Ekam — run in Supabase SQL Editor (new project)
 -- After: Authentication → enable Email provider; set Site URL to your deployed URL
 
 -- ---------------------------------------------------------------------------

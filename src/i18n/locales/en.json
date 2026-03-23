@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "Sento Ekam",
+    "appName": "Sentosa Ekam",
     "tagline": "Your society portal",
     "loading": "Loading…",
     "save": "Save",
@@ -31,7 +31,7 @@
     "register": "Request access"
   },
   "home": {
-    "heroTitle": "Welcome to Sento Ekam",
+    "heroTitle": "Welcome to Sentosa Ekam",
     "heroSubtitle": "Book the common hall, manage parking stickers, connect with neighbours, and browse local listings — in one place.",
     "ctaRegister": "Request access",
     "ctaSignIn": "Sign in",
@@ -63,7 +63,7 @@
   },
   "pending": {
     "title": "Awaiting approval",
-    "body": "Your registration is pending review by the Sento Ekam committee. You will be able to use the portal once your access is approved.",
+    "body": "Your registration is pending review by the Sentosa Ekam committee. You will be able to use the portal once your access is approved.",
     "refresh": "I've been approved — refresh"
   },
   "dashboard": {

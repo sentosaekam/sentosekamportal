@@ -1,4 +1,4 @@
-# Sento Ekam — Society Portal
+# Sentosa Ekam — Society Portal
 
 React + Vite + Tailwind CSS + Supabase. Features: common hall booking (overlap checks), parking stickers (max 4 per flat), contacts, nearby landmarks, buy & sell, and admin approval for new members. UI strings are available in **English**, **Hindi**, and **Marathi** (language switcher in the header).
 
