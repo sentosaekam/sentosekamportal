@@ -14,6 +14,7 @@ const features = [
 export function HomePage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
+  const societyEmail = (import.meta.env.VITE_SOCIETY_NOTIFY_EMAIL ?? '').trim()
 
   return (
     <div className="min-h-screen">
@@ -33,6 +34,17 @@ export function HomePage() {
             </Button>
           </div>
           <p className="mt-4 text-sm text-stone-500">{t('home.accessNote')}</p>
+          {societyEmail && (
+            <p className="mt-3 text-sm text-stone-600">
+              <span className="font-medium text-stone-700">{t('home.societyEmail')}: </span>
+              <a
+                href={`mailto:${societyEmail}`}
+                className="text-brand-700 underline underline-offset-2 hover:text-brand-800"
+              >
+                {societyEmail}
+              </a>
+            </p>
+          )}
         </div>
 
         <h2 className="mt-16 text-center text-xl font-semibold text-stone-900">

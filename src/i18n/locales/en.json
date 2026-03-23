@@ -44,7 +44,8 @@
     "f3Desc": "Office bearers, schools, hospitals — curated by the committee.",
     "f4Title": "Buy & sell",
     "f4Desc": "List items within the community marketplace.",
-    "accessNote": "Access is by approval only. Your request is reviewed by the society committee."
+    "accessNote": "Access is by approval only. Your request is reviewed by the society committee.",
+    "societyEmail": "Society committee"
   },
   "auth": {
     "email": "Email",

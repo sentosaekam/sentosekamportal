@@ -36,6 +36,7 @@ Edit `.env` and set:
 
 - `VITE_SUPABASE_URL` — **Project Settings → API → Project URL**
 - `VITE_SUPABASE_ANON_KEY` — **anon public** key (never commit the service role key)
+- `VITE_SOCIETY_NOTIFY_EMAIL` *(optional)* — society / committee email; shown on the home page (set the same on Vercel for production)
 
 ```bash
 npm install
