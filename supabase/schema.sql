@@ -232,6 +232,14 @@ create policy "profiles_update_own_or_admin"
     )
   );
 
+-- Self-heal: if trigger/RPC didn’t create a row, the app may insert one (role pending only).
+create policy "profiles_insert_own_pending"
+  on public.profiles for insert
+  with check (
+    auth.uid() = id
+    and role = 'pending'
+  );
+
 -- Hall: members + admins
 create policy "hall_select_members"
   on public.hall_bookings for select

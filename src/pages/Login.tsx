@@ -30,8 +30,9 @@ export function LoginPage() {
     if (!supabaseConfigured) return
     setError(null)
     setLoading(true)
+    const emailNorm = email.trim().toLowerCase()
     const { error: err } = await supabase.auth.signInWithPassword({
-      email,
+      email: emailNorm,
       password,
     })
     if (err) {
@@ -39,7 +40,14 @@ export function LoginPage() {
       const m = err.message ?? ''
       const isNetwork =
         /failed to fetch|networkerror|load failed|network request failed/i.test(m)
-      setError(isNetwork ? t('common.networkError') : t('auth.invalidCredentials'))
+      if (isNetwork) {
+        setError(t('common.networkError'))
+        return
+      }
+      // Don’t hide Supabase’s message: "Email not confirmed", rate limits, etc. look like wrong password otherwise.
+      const looksLikeWrongPassword =
+        /invalid login credentials|invalid email or password/i.test(m)
+      setError(looksLikeWrongPassword ? t('auth.invalidCredentials') : m)
       return
     }
     const p = await refreshProfile()
