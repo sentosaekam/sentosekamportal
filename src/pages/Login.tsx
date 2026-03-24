@@ -9,7 +9,7 @@ import { supabase, supabaseConfigured } from '../lib/supabase'
 export function LoginPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { user, profile, loading: authLoading, refreshProfile } = useAuth()
+  const { user, profile, loading: authLoading } = useAuth()
 
   useEffect(() => {
     if (authLoading || !user) return
@@ -31,33 +31,35 @@ export function LoginPage() {
     setError(null)
     setLoading(true)
     const emailNorm = email.trim().toLowerCase()
-    const { error: err } = await supabase.auth.signInWithPassword({
-      email: emailNorm,
-      password,
-    })
-    if (err) {
-      setLoading(false)
-      const m = err.message ?? ''
-      const isNetwork =
-        /failed to fetch|networkerror|load failed|network request failed/i.test(m)
-      if (isNetwork) {
-        setError(t('common.networkError'))
+    try {
+      const { error: err } = await supabase.auth.signInWithPassword({
+        email: emailNorm,
+        password,
+      })
+      if (err) {
+        const m = err.message ?? ''
+        const isNetwork =
+          /failed to fetch|networkerror|load failed|network request failed/i.test(m)
+        if (isNetwork) {
+          setError(t('common.networkError'))
+          return
+        }
+        const looksLikeWrongPassword =
+          /invalid login credentials|invalid email or password/i.test(m)
+        setError(looksLikeWrongPassword ? t('auth.invalidCredentials') : m)
         return
       }
-      // Don’t hide Supabase’s message: "Email not confirmed", rate limits, etc. look like wrong password otherwise.
-      const looksLikeWrongPassword =
-        /invalid login credentials|invalid email or password/i.test(m)
-      setError(looksLikeWrongPassword ? t('auth.invalidCredentials') : m)
-      return
+      // Session is applied by the client; onAuthStateChange loads the profile. Do not await
+      // refreshProfile() here — it duplicated that work and could leave the button stuck on “Loading…”.
+      // Navigation runs from the effect below once authLoading + user + profile are ready.
+    } catch (unknown) {
+      const m = unknown instanceof Error ? unknown.message : String(unknown)
+      const isNetwork =
+        /failed to fetch|networkerror|load failed|network request failed/i.test(m)
+      setError(isNetwork ? t('common.networkError') : m)
+    } finally {
+      setLoading(false)
     }
-    const p = await refreshProfile()
-    setLoading(false)
-    if (!p) {
-      navigate('/account-issue', { replace: true })
-      return
-    }
-    if (p.role === 'pending') navigate('/pending', { replace: true })
-    else navigate('/app', { replace: true })
   }
 
   return (

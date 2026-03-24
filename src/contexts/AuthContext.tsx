@@ -28,7 +28,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setProfile(null)
       return null
     }
-    const p = await fetchProfileWithEnsure(u.id)
+    let p: Profile | null = null
+    try {
+      p = await fetchProfileWithEnsure(u.id)
+    } catch (e) {
+      console.error('fetchProfileWithEnsure', e)
+    }
     setProfile(p)
     return p
   }, [])
@@ -50,7 +55,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (s?.user) {
         prevUserIdRef.current = uid
         if (userChanged) setLoading(true)
-        const p = await fetchProfileWithEnsure(s.user.id)
+        let p: Profile | null = null
+        try {
+          p = await fetchProfileWithEnsure(s.user.id)
+        } catch (e) {
+          console.error('fetchProfileWithEnsure', e)
+        }
         if (mounted) {
           setProfile(p)
           setLoading(false)
