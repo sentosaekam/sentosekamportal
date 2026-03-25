@@ -9,7 +9,7 @@ import { supabase, supabaseConfigured } from '../lib/supabase'
 export function LoginPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
-  const { user, profile, loading: authLoading } = useAuth()
+  const { user, profile, loading: authLoading, refreshProfile } = useAuth()
 
   useEffect(() => {
     if (authLoading || !user) return
@@ -49,9 +49,14 @@ export function LoginPage() {
         setError(looksLikeWrongPassword ? t('auth.invalidCredentials') : m)
         return
       }
-      // Session is applied by the client; onAuthStateChange loads the profile. Do not await
-      // refreshProfile() here — it duplicated that work and could leave the button stuck on “Loading…”.
-      // Navigation runs from the effect below once authLoading + user + profile are ready.
+      // Navigate here so we don’t rely only on the effect (timing with onAuthStateChange + profile fetch).
+      const p = await refreshProfile()
+      if (!p) {
+        navigate('/account-issue', { replace: true })
+        return
+      }
+      if (p.role === 'pending') navigate('/pending', { replace: true })
+      else navigate('/app', { replace: true })
     } catch (unknown) {
       const m = unknown instanceof Error ? unknown.message : String(unknown)
       const isNetwork =
