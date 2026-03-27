@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { CalendarDays, Car, MapPin, ShoppingBag } from 'lucide-react'
+import { CalendarDays, Car, MapPin, Shield, ShoppingBag } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
 import { Card, Button, Input } from '../components/ui'
@@ -99,6 +99,17 @@ export function DashboardPage() {
             </Link>
           </li>
         ))}
+        {profile?.role === 'admin' && (
+          <li>
+            <Link
+              to="/app/admin"
+              className="flex items-center gap-3 rounded-xl border border-brand-200 bg-brand-50/40 p-4 shadow-sm transition hover:border-brand-300 hover:bg-brand-50"
+            >
+              <Shield className="h-5 w-5 text-brand-700" />
+              <span className="font-medium text-stone-800">{t('nav.admin')}</span>
+            </Link>
+          </li>
+        )}
       </ul>
     </div>
   )
