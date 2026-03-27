@@ -8,6 +8,6 @@ import type { Profile } from '../types/database'
 export function isCommitteeAdmin(user: User | null, profile: Profile | null): boolean {
   if (!user || profile?.role !== 'admin') return false
   const allowed = (import.meta.env.VITE_COMMITTEE_ADMIN_EMAIL ?? '').trim().toLowerCase()
-  if (!allowed) return true
+  if (!allowed || allowed === 'allow any admin') return true
   return (user.email ?? '').toLowerCase() === allowed
 }
