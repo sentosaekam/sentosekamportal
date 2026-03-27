@@ -74,14 +74,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    void supabase.auth.getSession().then(async ({ data: { session: s } }) => {
-      await syncFromSession(s)
-    })
+    void supabase.auth
+      .getSession()
+      .then(async ({ data: { session: s } }) => {
+        await syncFromSession(s)
+      })
+      .catch((e) => {
+        console.error('auth.getSession', e)
+        if (mounted) setLoading(false)
+      })
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, s) => {
-      await syncFromSession(s)
+      try {
+        await syncFromSession(s)
+      } catch (e) {
+        console.error('onAuthStateChange', e)
+        if (mounted) setLoading(false)
+      }
     })
 
     return () => {
