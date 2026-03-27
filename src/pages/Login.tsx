@@ -6,6 +6,8 @@ import { PublicHeader } from '../components/PublicHeader'
 import { Button, Card, Input } from '../components/ui'
 import { supabase, supabaseConfigured } from '../lib/supabase'
 
+const LOGIN_TIMEOUT_MS = 15000
+
 export function LoginPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
@@ -32,10 +34,14 @@ export function LoginPage() {
     setLoading(true)
     const emailNorm = email.trim().toLowerCase()
     try {
-      const { error: err } = await supabase.auth.signInWithPassword({
+      const signInPromise = supabase.auth.signInWithPassword({
         email: emailNorm,
         password,
       })
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Login request timed out. Please try again.')), LOGIN_TIMEOUT_MS)
+      })
+      const { error: err } = await Promise.race([signInPromise, timeoutPromise])
       if (err) {
         const m = err.message ?? ''
         const isNetwork =
