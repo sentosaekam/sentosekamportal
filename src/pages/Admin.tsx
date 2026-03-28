@@ -26,15 +26,22 @@ export function AdminPage() {
   const [lNotes, setLNotes] = useState('')
 
   const load = useCallback(async () => {
-    const [pRes, coRes, laRes] = await Promise.all([
-      supabase.from('profiles').select('*').order('created_at', { ascending: false }),
-      supabase.from('contacts').select('*').order('sort_order', { ascending: true }),
-      supabase.from('landmarks').select('*').order('sort_order', { ascending: true }),
-    ])
-    if (pRes.data) setProfiles(pRes.data as Profile[])
-    if (coRes.data) setContacts(coRes.data as Contact[])
-    if (laRes.data) setLandmarks(laRes.data as Landmark[])
-    setLoading(false)
+    setLoading(true)
+    try {
+      const [pRes, coRes, laRes] = await Promise.all([
+        supabase.from('profiles').select('*').order('created_at', { ascending: false }),
+        supabase.from('contacts').select('*').order('sort_order', { ascending: true }),
+        supabase.from('landmarks').select('*').order('sort_order', { ascending: true }),
+      ])
+      if (pRes.error) console.error('admin.profiles', pRes.error)
+      if (coRes.error) console.error('admin.contacts', coRes.error)
+      if (laRes.error) console.error('admin.landmarks', laRes.error)
+      if (pRes.data) setProfiles(pRes.data as Profile[])
+      if (coRes.data) setContacts(coRes.data as Contact[])
+      if (laRes.data) setLandmarks(laRes.data as Landmark[])
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   useEffect(() => {
@@ -108,7 +115,7 @@ export function AdminPage() {
       <h1 className="text-2xl font-bold text-stone-900">{t('admin.title')}</h1>
       {loading && <p className="mt-4 text-stone-500">{t('common.loading')}</p>}
 
-      <section className="mt-10">
+      <section id="pending" className="mt-10 scroll-mt-24">
         <h2 className="text-lg font-semibold text-stone-900">{t('admin.pendingUsers')}</h2>
         {pending.length === 0 ? (
           <p className="mt-2 text-stone-500">{t('admin.noPending')}</p>
@@ -137,7 +144,7 @@ export function AdminPage() {
         )}
       </section>
 
-      <section className="mt-12">
+      <section id="contacts" className="mt-12 scroll-mt-24">
         <h2 className="text-lg font-semibold text-stone-900">{t('admin.allProfiles')}</h2>
         <div className="mt-4 overflow-x-auto rounded-xl border border-stone-200 bg-white">
           <table className="w-full min-w-[640px] text-left text-sm">

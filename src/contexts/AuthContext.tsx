@@ -11,6 +11,8 @@ import { fetchProfileWithEnsure, supabase, supabaseConfigured } from '../lib/sup
 import type { Profile } from '../types/database'
 import { AuthContext } from './auth-context'
 
+const PROFILE_SYNC_TIMEOUT_MS = 12000
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [user, setUser] = useState<User | null>(null)
@@ -30,7 +32,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     let p: Profile | null = null
     try {
-      p = await fetchProfileWithEnsure(u.id)
+      p = await Promise.race([
+        fetchProfileWithEnsure(u.id),
+        new Promise<null>((resolve) => {
+          setTimeout(() => resolve(null), PROFILE_SYNC_TIMEOUT_MS)
+        }),
+      ])
     } catch (e) {
       console.error('fetchProfileWithEnsure', e)
     }
@@ -57,7 +64,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (userChanged) setLoading(true)
         let p: Profile | null = null
         try {
-          p = await fetchProfileWithEnsure(s.user.id)
+          p = await Promise.race([
+            fetchProfileWithEnsure(s.user.id),
+            new Promise<null>((resolve) => {
+              setTimeout(() => resolve(null), PROFILE_SYNC_TIMEOUT_MS)
+            }),
+          ])
         } catch (e) {
           console.error('fetchProfileWithEnsure', e)
         }

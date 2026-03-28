@@ -100,15 +100,26 @@ export function DashboardPage() {
           </li>
         ))}
         {profile?.role === 'admin' && (
-          <li>
-            <Link
-              to="/app/admin"
-              className="flex items-center gap-3 rounded-xl border border-brand-200 bg-brand-50/40 p-4 shadow-sm transition hover:border-brand-300 hover:bg-brand-50"
-            >
-              <Shield className="h-5 w-5 text-brand-700" />
-              <span className="font-medium text-stone-800">{t('nav.admin')}</span>
-            </Link>
-          </li>
+          <>
+            <li>
+              <Link
+                to="/app/admin#pending"
+                className="flex items-center gap-3 rounded-xl border border-brand-200 bg-brand-50/40 p-4 shadow-sm transition hover:border-brand-300 hover:bg-brand-50"
+              >
+                <Shield className="h-5 w-5 text-brand-700" />
+                <span className="font-medium text-stone-800">Approve Users</span>
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/app/admin#contacts"
+                className="flex items-center gap-3 rounded-xl border border-brand-200 bg-brand-50/40 p-4 shadow-sm transition hover:border-brand-300 hover:bg-brand-50"
+              >
+                <Shield className="h-5 w-5 text-brand-700" />
+                <span className="font-medium text-stone-800">Contact Details</span>
+              </Link>
+            </li>
+          </>
         )}
       </ul>
     </div>
