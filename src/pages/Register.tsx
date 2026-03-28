@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import type { User } from '@supabase/supabase-js'
 import { useAuth } from '../hooks/useAuth'
 import { PublicHeader } from '../components/PublicHeader'
 import { Button, Card, Input } from '../components/ui'
@@ -29,20 +30,45 @@ export function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const [done, setDone] = useState(false)
 
+  async function upsertPendingProfile(user: User, emailNorm: string) {
+    const payload = {
+      id: user.id,
+      full_name: fullName.trim(),
+      flat_number: flatNumber.trim(),
+      phone: phone.trim() || null,
+      email: emailNorm,
+      role: 'pending' as const,
+    }
+    const { error: upsertErr } = await supabase.from('profiles').upsert(payload, { onConflict: 'id' })
+    if (upsertErr) {
+      // Keep sign-up successful even if profile upsert is blocked by RLS/legacy policy.
+      console.error('register.upsertPendingProfile', upsertErr)
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!supabaseConfigured) return
     setError(null)
     setLoading(true)
-    const { error: err } = await supabase.auth.signUp({
-      email,
-      password,
+    const emailNorm = email.trim().toLowerCase()
+    const passwordRaw = password.trim()
+
+    if (!emailNorm || !passwordRaw) {
+      setError('Please enter a valid email and password.')
+      setLoading(false)
+      return
+    }
+
+    const { data, error: err } = await supabase.auth.signUp({
+      email: emailNorm,
+      password: passwordRaw,
       options: {
         emailRedirectTo: window.location.origin,
         data: {
-          full_name: fullName,
-          flat_number: flatNumber,
-          phone: phone || undefined,
+          full_name: fullName.trim(),
+          flat_number: flatNumber.trim(),
+          phone: phone.trim() || undefined,
         },
       },
     })
@@ -53,6 +79,10 @@ export function RegisterPage() {
         /failed to fetch|networkerror|load failed|network request failed/i.test(m)
       setError(isNetwork ? t('common.networkError') : m)
       return
+    }
+
+    if (data.user) {
+      await upsertPendingProfile(data.user, emailNorm)
     }
     setDone(true)
   }

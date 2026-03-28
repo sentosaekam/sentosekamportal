@@ -57,7 +57,11 @@ export function AdminPage() {
   }
 
   async function approve(id: string) {
-    await supabase.from('profiles').update({ role: 'member' }).eq('id', id)
+    const { error } = await supabase.from('profiles').update({ role: 'member' }).eq('id', id)
+    if (error) {
+      console.error('admin.approve', error)
+      return
+    }
     void load()
     void refreshProfile()
   }
