@@ -14,6 +14,7 @@ export function AdminPage() {
   const [contacts, setContacts] = useState<Contact[]>([])
   const [landmarks, setLandmarks] = useState<Landmark[]>([])
   const [loading, setLoading] = useState(true)
+  const [status, setStatus] = useState<string | null>(null)
 
   const [cName, setCName] = useState('')
   const [cRole, setCRole] = useState('')
@@ -57,58 +58,101 @@ export function AdminPage() {
   }
 
   async function approve(id: string) {
+    setStatus(null)
     const { error } = await supabase.from('profiles').update({ role: 'member' }).eq('id', id)
     if (error) {
       console.error('admin.approve', error)
+      setStatus(`Approve failed: ${error.message}`)
       return
     }
+    setStatus('User approved.')
     void load()
     void refreshProfile()
   }
 
+  async function removeAccess(id: string) {
+    setStatus(null)
+    const { error } = await supabase.from('profiles').update({ role: 'pending' }).eq('id', id)
+    if (error) {
+      console.error('admin.removeAccess', error)
+      setStatus(`Remove access failed: ${error.message}`)
+      return
+    }
+    setStatus('User access removed (set to pending).')
+    void load()
+  }
+
   async function addContact(e: React.FormEvent) {
     e.preventDefault()
+    setStatus(null)
     const maxSort = contacts.reduce((m, c) => Math.max(m, c.sort_order), 0)
-    await supabase.from('contacts').insert({
+    const { error } = await supabase.from('contacts').insert({
       name: cName.trim(),
       role_label: cRole.trim() || null,
       phone: cPhone.trim() || null,
       email: cEmail.trim() || null,
       sort_order: maxSort + 1,
     })
+    if (error) {
+      console.error('admin.addContact', error)
+      setStatus(`Add contact failed: ${error.message}`)
+      return
+    }
     setCName('')
     setCRole('')
     setCPhone('')
     setCEmail('')
+    setStatus('Contact added.')
     void load()
   }
 
   async function deleteContact(id: string) {
     if (!confirm(t('common.delete'))) return
-    await supabase.from('contacts').delete().eq('id', id)
+    setStatus(null)
+    const { error } = await supabase.from('contacts').delete().eq('id', id)
+    if (error) {
+      console.error('admin.deleteContact', error)
+      setStatus(`Delete contact failed: ${error.message}`)
+      return
+    }
+    setStatus('Contact deleted.')
     void load()
   }
 
   async function addLandmark(e: React.FormEvent) {
     e.preventDefault()
+    setStatus(null)
     const maxSort = landmarks.reduce((m, l) => Math.max(m, l.sort_order), 0)
-    await supabase.from('landmarks').insert({
+    const { error } = await supabase.from('landmarks').insert({
       name: lName.trim(),
       category: lCat,
       address: lAddr.trim() || null,
       notes: lNotes.trim() || null,
       sort_order: maxSort + 1,
     })
+    if (error) {
+      console.error('admin.addLandmark', error)
+      setStatus(`Add landmark failed: ${error.message}`)
+      return
+    }
     setLName('')
     setLAddr('')
     setLNotes('')
     setLCat('school')
+    setStatus('Landmark added.')
     void load()
   }
 
   async function deleteLandmark(id: string) {
     if (!confirm(t('common.delete'))) return
-    await supabase.from('landmarks').delete().eq('id', id)
+    setStatus(null)
+    const { error } = await supabase.from('landmarks').delete().eq('id', id)
+    if (error) {
+      console.error('admin.deleteLandmark', error)
+      setStatus(`Delete landmark failed: ${error.message}`)
+      return
+    }
+    setStatus('Landmark deleted.')
     void load()
   }
 
@@ -118,6 +162,7 @@ export function AdminPage() {
     <div>
       <h1 className="text-2xl font-bold text-stone-900">{t('admin.title')}</h1>
       {loading && <p className="mt-4 text-stone-500">{t('common.loading')}</p>}
+      {status && <p className="mt-3 text-sm text-stone-700">{status}</p>}
 
       <section id="pending" className="mt-10 scroll-mt-24">
         <h2 className="text-lg font-semibold text-stone-900">{t('admin.pendingUsers')}</h2>
@@ -158,6 +203,7 @@ export function AdminPage() {
                 <th className="px-4 py-3 font-medium text-stone-700">{t('dashboard.flat')}</th>
                 <th className="px-4 py-3 font-medium text-stone-700">{t('auth.email')}</th>
                 <th className="px-4 py-3 font-medium text-stone-700">{t('dashboard.role')}</th>
+                <th className="px-4 py-3 font-medium text-stone-700">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -167,6 +213,17 @@ export function AdminPage() {
                   <td className="px-4 py-3">{p.flat_number || '—'}</td>
                   <td className="px-4 py-3 font-mono text-xs">{p.email || '—'}</td>
                   <td className="px-4 py-3">{p.role}</td>
+                  <td className="px-4 py-3">
+                    {p.id === profile.id ? (
+                      <span className="text-xs text-stone-500">Current user</span>
+                    ) : p.role === 'member' || p.role === 'admin' ? (
+                      <Button variant="danger" onClick={() => void removeAccess(p.id)}>
+                        Remove access
+                      </Button>
+                    ) : (
+                      <span className="text-xs text-stone-500">Pending</span>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
