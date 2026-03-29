@@ -82,6 +82,19 @@ export function AdminPage() {
     void load()
   }
 
+  async function deleteUser(id: string) {
+    if (!confirm('Delete this user profile? This cannot be undone.')) return
+    setStatus(null)
+    const { error } = await supabase.from('profiles').delete().eq('id', id)
+    if (error) {
+      console.error('admin.deleteUser', error)
+      setStatus(`Delete user failed: ${error.message}`)
+      return
+    }
+    setStatus('User deleted.')
+    void load()
+  }
+
   async function addContact(e: React.FormEvent) {
     e.preventDefault()
     setStatus(null)
@@ -220,8 +233,12 @@ export function AdminPage() {
                       <Button variant="danger" onClick={() => void removeAccess(p.id)}>
                         Remove access
                       </Button>
+                    ) : p.role === 'pending' ? (
+                      <Button variant="danger" onClick={() => void deleteUser(p.id)}>
+                        Delete user
+                      </Button>
                     ) : (
-                      <span className="text-xs text-stone-500">Pending</span>
+                      <span className="text-xs text-stone-500">—</span>
                     )}
                   </td>
                 </tr>
