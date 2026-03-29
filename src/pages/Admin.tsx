@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { Fragment, useCallback, useEffect, useState } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '../hooks/useAuth'
@@ -6,6 +6,26 @@ import { isCommitteeAdmin } from '../lib/committeeAdmin'
 import { supabase } from '../lib/supabase'
 import type { Contact, FamilyMember, Landmark, LandmarkCategory, Profile } from '../types/database'
 import { Button, Card, Input, TextArea } from '../components/ui'
+
+function calculateAge(birthDate: string | null | undefined): string {
+  if (!birthDate) return '—'
+  const dob = new Date(`${birthDate}T00:00:00`)
+  if (Number.isNaN(dob.getTime())) return '—'
+  const today = new Date()
+  let age = today.getFullYear() - dob.getFullYear()
+  const monthDiff = today.getMonth() - dob.getMonth()
+  const dayDiff = today.getDate() - dob.getDate()
+  if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) age -= 1
+  return `${age}`
+}
+
+function isBirthdayToday(birthDate: string | null | undefined): boolean {
+  if (!birthDate) return false
+  const dob = new Date(`${birthDate}T00:00:00`)
+  if (Number.isNaN(dob.getTime())) return false
+  const today = new Date()
+  return dob.getMonth() === today.getMonth() && dob.getDate() === today.getDate()
+}
 
 export function AdminPage() {
   const { t } = useTranslation()
@@ -231,6 +251,28 @@ export function AdminPage() {
       ? true
       : m.flat_number.toLowerCase().includes(familyFlatFilter.trim().toLowerCase()),
   )
+  const profilesById = new Map(profiles.map((p) => [p.id, p]))
+  const groupedFamilyMembers = filteredFamilyMembers.reduce<Record<string, FamilyMember[]>>((acc, member) => {
+    const key = member.flat_number?.trim() || '—'
+    if (!acc[key]) acc[key] = []
+    acc[key].push(member)
+    return acc
+  }, {})
+  const sortedFamilyFlatGroups = Object.entries(groupedFamilyMembers).sort(([a], [b]) =>
+    a.localeCompare(b, undefined, { numeric: true }),
+  )
+  const todaysBirthdays = filteredFamilyMembers.filter((m) => isBirthdayToday(m.birth_date))
+
+  function openWhatsappBirthdayReminder() {
+    if (todaysBirthdays.length === 0) return
+    const lines = todaysBirthdays.map((member) => {
+      const age = calculateAge(member.birth_date)
+      return `- ${member.name} (Flat ${member.flat_number || '—'})${age === '—' ? '' : ` turns ${age}`}`
+    })
+    const message = `Happy Birthday! Today we celebrate:\n${lines.join('\n')}`
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`
+    window.open(whatsappUrl, '_blank', 'noopener,noreferrer')
+  }
 
   return (
     <div>
@@ -340,27 +382,72 @@ export function AdminPage() {
             />
           </div>
         </div>
+        <Card className="mt-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-medium text-stone-900">Today's birthdays</p>
+              <p className="text-sm text-stone-600">
+                {todaysBirthdays.length === 0
+                  ? 'No birthdays today.'
+                  : `${todaysBirthdays.length} member(s) have birthday today.`}
+              </p>
+            </div>
+            <Button onClick={openWhatsappBirthdayReminder} disabled={todaysBirthdays.length === 0}>
+              Send WhatsApp Reminder
+            </Button>
+          </div>
+        </Card>
         <div className="mt-4 overflow-x-auto rounded-xl border border-stone-200 bg-white">
-          <table className="w-full min-w-[760px] text-left text-sm">
+          <table className="w-full min-w-[980px] text-left text-sm">
             <thead className="border-b border-stone-200 bg-stone-50">
               <tr>
                 <th className="px-4 py-3 font-medium text-stone-700">Flat</th>
                 <th className="px-4 py-3 font-medium text-stone-700">Name</th>
                 <th className="px-4 py-3 font-medium text-stone-700">Relation</th>
                 <th className="px-4 py-3 font-medium text-stone-700">Phone</th>
+                <th className="px-4 py-3 font-medium text-stone-700">Birth date</th>
+                <th className="px-4 py-3 font-medium text-stone-700">Age</th>
+                <th className="px-4 py-3 font-medium text-stone-700">Added by</th>
                 <th className="px-4 py-3 font-medium text-stone-700">Added on</th>
               </tr>
             </thead>
             <tbody>
-              {filteredFamilyMembers.map((m) => (
-                <tr key={m.id} className="border-b border-stone-100">
-                  <td className="px-4 py-3">{m.flat_number || '—'}</td>
-                  <td className="px-4 py-3">{m.name}</td>
-                  <td className="px-4 py-3">{m.relation || '—'}</td>
-                  <td className="px-4 py-3">{m.phone || '—'}</td>
-                  <td className="px-4 py-3">{new Date(m.created_at).toLocaleString()}</td>
+              {sortedFamilyFlatGroups.length === 0 ? (
+                <tr>
+                  <td className="px-4 py-3 text-stone-500" colSpan={8}>
+                    No family member records found.
+                  </td>
                 </tr>
-              ))}
+              ) : (
+                sortedFamilyFlatGroups.map(([flatNumber, members]) => (
+                  <Fragment key={flatNumber}>
+                    <tr key={`group-${flatNumber}`} className="border-b border-stone-200 bg-stone-50">
+                      <td className="px-4 py-2 font-semibold text-stone-800" colSpan={8}>
+                        Flat {flatNumber} ({members.length} member{members.length === 1 ? '' : 's'})
+                      </td>
+                    </tr>
+                    {members.map((m) => {
+                      const addedByProfile = m.added_by ? profilesById.get(m.added_by) : null
+                      return (
+                        <tr key={m.id} className="border-b border-stone-100">
+                          <td className="px-4 py-3">{m.flat_number || '—'}</td>
+                          <td className="px-4 py-3">{m.name}</td>
+                          <td className="px-4 py-3">{m.relation || '—'}</td>
+                          <td className="px-4 py-3">{m.phone || '—'}</td>
+                          <td className="px-4 py-3">{m.birth_date || '—'}</td>
+                          <td className="px-4 py-3">{calculateAge(m.birth_date)}</td>
+                          <td className="px-4 py-3">
+                            {addedByProfile
+                              ? `${addedByProfile.full_name} (${addedByProfile.flat_number || '—'})`
+                              : '—'}
+                          </td>
+                          <td className="px-4 py-3">{new Date(m.created_at).toLocaleString()}</td>
+                        </tr>
+                      )
+                    })}
+                  </Fragment>
+                ))
+              )}
             </tbody>
           </table>
         </div>

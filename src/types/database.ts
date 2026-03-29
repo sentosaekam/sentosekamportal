@@ -67,9 +67,11 @@ export interface Listing {
 export interface FamilyMember {
   id: string
   owner_id: string
+  added_by?: string | null
   flat_number: string
   name: string
   relation: string | null
   phone: string | null
+  birth_date?: string | null
   created_at: string
 }

@@ -24,6 +24,7 @@ export function DashboardPage() {
   const [fmName, setFmName] = useState('')
   const [fmRelation, setFmRelation] = useState('')
   const [fmPhone, setFmPhone] = useState('')
+  const [fmBirthDate, setFmBirthDate] = useState('')
   const [fmSaving, setFmSaving] = useState(false)
 
   useEffect(() => {
@@ -65,10 +66,12 @@ export function DashboardPage() {
     setFmSaving(true)
     const { error } = await supabase.from('family_members').insert({
       owner_id: profile.id,
+      added_by: profile.id,
       flat_number: profile.flat_number,
       name,
       relation: fmRelation.trim() || null,
       phone: fmPhone.trim() || null,
+      birth_date: fmBirthDate || null,
     })
     setFmSaving(false)
     if (error) {
@@ -78,6 +81,7 @@ export function DashboardPage() {
     setFmName('')
     setFmRelation('')
     setFmPhone('')
+    setFmBirthDate('')
     await loadFamilyMembers(profile.id)
   }
 
@@ -95,6 +99,18 @@ export function DashboardPage() {
     if (!profile) return
     void loadFamilyMembers(profile.id)
   }, [profile])
+
+  function getAgeText(birthDate: string | null | undefined) {
+    if (!birthDate) return '—'
+    const dob = new Date(`${birthDate}T00:00:00`)
+    if (Number.isNaN(dob.getTime())) return '—'
+    const today = new Date()
+    let age = today.getFullYear() - dob.getFullYear()
+    const monthDiff = today.getMonth() - dob.getMonth()
+    const dayDiff = today.getDate() - dob.getDate()
+    if (monthDiff < 0 || (monthDiff === 0 && dayDiff < 0)) age -= 1
+    return `${age}`
+  }
 
   return (
     <div>
@@ -186,7 +202,7 @@ export function DashboardPage() {
         <p className="mt-1 text-sm text-stone-600">
           Add family records under your flat. No login or admin approval is needed.
         </p>
-        <form onSubmit={addFamilyMemberRecord} className="mt-4 grid gap-4 sm:grid-cols-3">
+        <form onSubmit={addFamilyMemberRecord} className="mt-4 grid gap-4 sm:grid-cols-4">
           <div>
             <label className="mb-1 block text-sm font-medium text-stone-700">Name</label>
             <Input required value={fmName} onChange={(e) => setFmName(e.target.value)} />
@@ -199,7 +215,15 @@ export function DashboardPage() {
             <label className="mb-1 block text-sm font-medium text-stone-700">Phone</label>
             <Input value={fmPhone} onChange={(e) => setFmPhone(e.target.value)} />
           </div>
-          <div className="sm:col-span-3">
+          <div>
+            <label className="mb-1 block text-sm font-medium text-stone-700">Birth date</label>
+            <Input
+              type="date"
+              value={fmBirthDate}
+              onChange={(e) => setFmBirthDate(e.target.value)}
+            />
+          </div>
+          <div className="sm:col-span-4">
             <Button type="submit" disabled={fmSaving}>
               {fmSaving ? t('common.loading') : 'Add Member Record'}
             </Button>
@@ -213,7 +237,8 @@ export function DashboardPage() {
               <li key={m.id}>
                 <Card className="flex flex-wrap items-center justify-between gap-3 py-3">
                   <span>
-                    <strong>{m.name}</strong> — {m.relation || '—'} — {m.phone || '—'}
+                    <strong>{m.name}</strong> — {m.relation || '—'} — {m.phone || '—'} — DOB:{' '}
+                    {m.birth_date || '—'} — Age: {getAgeText(m.birth_date)}
                   </span>
                   <Button variant="danger" onClick={() => void deleteFamilyMember(m.id)}>
                     {t('common.delete')}

@@ -4,10 +4,12 @@
 create table if not exists public.family_members (
   id uuid primary key default gen_random_uuid(),
   owner_id uuid not null references public.profiles(id) on delete cascade,
+  added_by uuid references public.profiles(id) on delete set null default auth.uid(),
   flat_number text not null default '',
   name text not null,
   relation text,
   phone text,
+  birth_date date,
   created_at timestamptz not null default now()
 );
 
