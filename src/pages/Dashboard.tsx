@@ -41,7 +41,6 @@ export function DashboardPage() {
 
   async function addFamilyMember() {
     const flatParam = encodeURIComponent((profile?.flat_number ?? '').trim())
-    await supabase.auth.signOut()
     navigate(`/register?flat=${flatParam}&family=1`)
   }
 

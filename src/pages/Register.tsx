@@ -63,6 +63,11 @@ export function RegisterPage() {
       return
     }
 
+    if (familyMode && user) {
+      // In family-mode, create a fresh account intentionally instead of reusing member session.
+      await supabase.auth.signOut()
+    }
+
     const { data, error: err } = await supabase.auth.signUp({
       email: emailNorm,
       password: passwordRaw,
