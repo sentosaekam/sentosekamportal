@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import type { User } from '@supabase/supabase-js'
 import { useAuth } from '../hooks/useAuth'
@@ -11,9 +11,12 @@ export function RegisterPage() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const { user, profile, loading: authLoading } = useAuth()
+  const [searchParams] = useSearchParams()
+  const familyMode = searchParams.get('family') === '1'
 
   useEffect(() => {
     if (authLoading || !user) return
+    if (familyMode) return
     if (!profile) {
       navigate('/account-issue', { replace: true })
       return
@@ -24,7 +27,7 @@ export function RegisterPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
-  const [flatNumber, setFlatNumber] = useState('')
+  const [flatNumber, setFlatNumber] = useState(searchParams.get('flat') ?? '')
   const [phone, setPhone] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)

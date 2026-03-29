@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { CalendarDays, Car, MapPin, Shield, ShoppingBag } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
@@ -15,6 +15,7 @@ const links = [
 
 export function DashboardPage() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const { profile, refreshProfile } = useAuth()
   const [flat, setFlat] = useState(profile?.flat_number ?? '')
   const [phone, setPhone] = useState(profile?.phone ?? '')
@@ -36,6 +37,12 @@ export function DashboardPage() {
       .eq('id', profile.id)
     setSaving(false)
     void refreshProfile()
+  }
+
+  async function addFamilyMember() {
+    const flatParam = encodeURIComponent((profile?.flat_number ?? '').trim())
+    await supabase.auth.signOut()
+    navigate(`/register?flat=${flatParam}&family=1`)
   }
 
   return (
@@ -87,6 +94,11 @@ export function DashboardPage() {
       <h2 className="mt-10 text-lg font-semibold text-stone-900">
         {t('dashboard.quickLinks')}
       </h2>
+      <div className="mt-3">
+        <Button variant="secondary" onClick={() => void addFamilyMember()}>
+          Add Family Member
+        </Button>
+      </div>
       <ul className="mt-4 grid gap-3 sm:grid-cols-2">
         {links.map(({ to, key, icon: Icon }) => (
           <li key={to}>

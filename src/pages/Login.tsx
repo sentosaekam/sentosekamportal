@@ -77,6 +77,11 @@ export function LoginPage() {
               {t('auth.noAccount')}
             </Link>
           </p>
+          <p className="mt-1 text-sm text-stone-600">
+            <Link to="/forgot-password" className="text-brand-700 underline underline-offset-2">
+              Forgot password?
+            </Link>
+          </p>
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div>
               <label className="mb-1 block text-sm font-medium text-stone-700">
