@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { CalendarDays, Car, MapPin, Shield, ShoppingBag } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { supabase } from '../lib/supabase'
 import { Card, Button, Input } from '../components/ui'
+import type { FamilyMember } from '../types/database'
 
 const links = [
   { to: '/app/hall', key: 'nav.hall', icon: CalendarDays },
@@ -15,11 +16,15 @@ const links = [
 
 export function DashboardPage() {
   const { t } = useTranslation()
-  const navigate = useNavigate()
   const { profile, refreshProfile } = useAuth()
   const [flat, setFlat] = useState(profile?.flat_number ?? '')
   const [phone, setPhone] = useState(profile?.phone ?? '')
   const [saving, setSaving] = useState(false)
+  const [familyMembers, setFamilyMembers] = useState<FamilyMember[]>([])
+  const [fmName, setFmName] = useState('')
+  const [fmRelation, setFmRelation] = useState('')
+  const [fmPhone, setFmPhone] = useState('')
+  const [fmSaving, setFmSaving] = useState(false)
 
   useEffect(() => {
     if (!profile) return
@@ -39,10 +44,57 @@ export function DashboardPage() {
     void refreshProfile()
   }
 
-  async function addFamilyMember() {
-    const flatParam = encodeURIComponent((profile?.flat_number ?? '').trim())
-    navigate(`/register?flat=${flatParam}&family=1`)
+  async function loadFamilyMembers(ownerId: string) {
+    const { data, error } = await supabase
+      .from('family_members')
+      .select('*')
+      .eq('owner_id', ownerId)
+      .order('created_at', { ascending: false })
+    if (error) {
+      console.error('dashboard.family_members', error)
+      return
+    }
+    setFamilyMembers((data ?? []) as FamilyMember[])
   }
+
+  async function addFamilyMemberRecord(e: React.FormEvent) {
+    e.preventDefault()
+    if (!profile) return
+    const name = fmName.trim()
+    if (!name) return
+    setFmSaving(true)
+    const { error } = await supabase.from('family_members').insert({
+      owner_id: profile.id,
+      flat_number: profile.flat_number,
+      name,
+      relation: fmRelation.trim() || null,
+      phone: fmPhone.trim() || null,
+    })
+    setFmSaving(false)
+    if (error) {
+      console.error('dashboard.addFamilyMember', error)
+      return
+    }
+    setFmName('')
+    setFmRelation('')
+    setFmPhone('')
+    await loadFamilyMembers(profile.id)
+  }
+
+  async function deleteFamilyMember(id: string) {
+    if (!confirm('Delete this family member record?')) return
+    const { error } = await supabase.from('family_members').delete().eq('id', id)
+    if (error) {
+      console.error('dashboard.deleteFamilyMember', error)
+      return
+    }
+    if (profile) await loadFamilyMembers(profile.id)
+  }
+
+  useEffect(() => {
+    if (!profile) return
+    void loadFamilyMembers(profile.id)
+  }, [profile])
 
   return (
     <div>
@@ -93,11 +145,6 @@ export function DashboardPage() {
       <h2 className="mt-10 text-lg font-semibold text-stone-900">
         {t('dashboard.quickLinks')}
       </h2>
-      <div className="mt-3">
-        <Button variant="secondary" onClick={() => void addFamilyMember()}>
-          Add Family Member
-        </Button>
-      </div>
       <ul className="mt-4 grid gap-3 sm:grid-cols-2">
         {links.map(({ to, key, icon: Icon }) => (
           <li key={to}>
@@ -133,6 +180,50 @@ export function DashboardPage() {
           </>
         )}
       </ul>
+
+      <Card className="mt-8">
+        <h2 className="text-lg font-semibold text-stone-900">Family Members ({profile?.flat_number || '—'})</h2>
+        <p className="mt-1 text-sm text-stone-600">
+          Add family records under your flat. No login or admin approval is needed.
+        </p>
+        <form onSubmit={addFamilyMemberRecord} className="mt-4 grid gap-4 sm:grid-cols-3">
+          <div>
+            <label className="mb-1 block text-sm font-medium text-stone-700">Name</label>
+            <Input required value={fmName} onChange={(e) => setFmName(e.target.value)} />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-stone-700">Relation</label>
+            <Input value={fmRelation} onChange={(e) => setFmRelation(e.target.value)} />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-stone-700">Phone</label>
+            <Input value={fmPhone} onChange={(e) => setFmPhone(e.target.value)} />
+          </div>
+          <div className="sm:col-span-3">
+            <Button type="submit" disabled={fmSaving}>
+              {fmSaving ? t('common.loading') : 'Add Member Record'}
+            </Button>
+          </div>
+        </form>
+        <ul className="mt-4 space-y-2">
+          {familyMembers.length === 0 ? (
+            <li className="text-sm text-stone-500">No family member records yet.</li>
+          ) : (
+            familyMembers.map((m) => (
+              <li key={m.id}>
+                <Card className="flex flex-wrap items-center justify-between gap-3 py-3">
+                  <span>
+                    <strong>{m.name}</strong> — {m.relation || '—'} — {m.phone || '—'}
+                  </span>
+                  <Button variant="danger" onClick={() => void deleteFamilyMember(m.id)}>
+                    {t('common.delete')}
+                  </Button>
+                </Card>
+              </li>
+            ))
+          )}
+        </ul>
+      </Card>
     </div>
   )
 }

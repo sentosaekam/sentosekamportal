@@ -63,3 +63,13 @@ export interface Listing {
   created_at: string
   updated_at: string
 }
+
+export interface FamilyMember {
+  id: string
+  owner_id: string
+  flat_number: string
+  name: string
+  relation: string | null
+  phone: string | null
+  created_at: string
+}
