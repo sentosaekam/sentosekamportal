@@ -82,6 +82,18 @@ export function AdminPage() {
     void load()
   }
 
+  async function setUserRole(id: string, role: 'member' | 'admin') {
+    setStatus(null)
+    const { error } = await supabase.from('profiles').update({ role }).eq('id', id)
+    if (error) {
+      console.error('admin.setUserRole', error)
+      setStatus(`Role update failed: ${error.message}`)
+      return
+    }
+    setStatus(role === 'admin' ? 'User promoted to admin.' : 'User set to member.')
+    void load()
+  }
+
   async function deleteUser(id: string) {
     if (!confirm('Delete this user profile? This cannot be undone.')) return
     setStatus(null)
@@ -230,9 +242,18 @@ export function AdminPage() {
                     {p.id === profile.id ? (
                       <span className="text-xs text-stone-500">Current user</span>
                     ) : p.role === 'member' || p.role === 'admin' ? (
-                      <Button variant="danger" onClick={() => void removeAccess(p.id)}>
-                        Remove access
-                      </Button>
+                      <div className="flex flex-wrap gap-2">
+                        {p.role === 'member' ? (
+                          <Button onClick={() => void setUserRole(p.id, 'admin')}>Make admin</Button>
+                        ) : (
+                          <Button onClick={() => void setUserRole(p.id, 'member')}>
+                            Remove admin
+                          </Button>
+                        )}
+                        <Button variant="danger" onClick={() => void removeAccess(p.id)}>
+                          Remove access
+                        </Button>
+                      </div>
                     ) : p.role === 'pending' ? (
                       <Button variant="danger" onClick={() => void deleteUser(p.id)}>
                         Delete user
