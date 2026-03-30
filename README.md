@@ -32,6 +32,7 @@ If a trigger fails to create (rare Postgres version differences), try replacing 
    - `supabase/migration_ensure_my_profile.sql` — creates `ensure_my_profile()` so users without a `profiles` row (missing trigger) get a row on next load; run this if people see “couldn’t load your society profile” while signed in.
    - `supabase/migration_profiles_self_insert_policy.sql` — RLS policy so a signed-in user can create **only** their own row with role `pending`. The portal uses this as a fallback when the RPC above is missing or fails; run it if users stay stuck on the account-issue screen after signing in.
    - `supabase/migration_family_members_added_by_birthdate.sql` — adds `added_by` and `birth_date` on family members for admin traceability, age display, and birthday reminders.
+   - `supabase/migration_family_members_rental_and_vehicle_parking.sql` — adds rental agreement fields for family members and `parking_location` (basement/ground_floor) on vehicles.
 
 **If login still shows “couldn’t load your society profile” after that migration:** in SQL Editor run the backfill (creates missing `profiles` rows for every auth user):
 

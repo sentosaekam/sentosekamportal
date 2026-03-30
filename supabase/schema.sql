@@ -46,6 +46,7 @@ create table public.vehicles (
   flat_number text not null,
   registration_number text not null,
   vehicle_type text,
+  parking_location text not null default 'basement' check (parking_location in ('basement', 'ground_floor')),
   created_at timestamptz not null default now(),
   unique (flat_number, registration_number)
 );

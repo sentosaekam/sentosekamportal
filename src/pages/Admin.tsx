@@ -398,7 +398,7 @@ export function AdminPage() {
           </div>
         </Card>
         <div className="mt-4 overflow-x-auto rounded-xl border border-stone-200 bg-white">
-          <table className="w-full min-w-[980px] text-left text-sm">
+          <table className="w-full min-w-[1240px] text-left text-sm">
             <thead className="border-b border-stone-200 bg-stone-50">
               <tr>
                 <th className="px-4 py-3 font-medium text-stone-700">Flat</th>
@@ -407,6 +407,9 @@ export function AdminPage() {
                 <th className="px-4 py-3 font-medium text-stone-700">Phone</th>
                 <th className="px-4 py-3 font-medium text-stone-700">Birth date</th>
                 <th className="px-4 py-3 font-medium text-stone-700">Age</th>
+                <th className="px-4 py-3 font-medium text-stone-700">Rented family</th>
+                <th className="px-4 py-3 font-medium text-stone-700">Agreement status</th>
+                <th className="px-4 py-3 font-medium text-stone-700">Agreement last day</th>
                 <th className="px-4 py-3 font-medium text-stone-700">Added by</th>
                 <th className="px-4 py-3 font-medium text-stone-700">Added on</th>
               </tr>
@@ -414,7 +417,7 @@ export function AdminPage() {
             <tbody>
               {sortedFamilyFlatGroups.length === 0 ? (
                 <tr>
-                  <td className="px-4 py-3 text-stone-500" colSpan={8}>
+                  <td className="px-4 py-3 text-stone-500" colSpan={11}>
                     No family member records found.
                   </td>
                 </tr>
@@ -422,7 +425,7 @@ export function AdminPage() {
                 sortedFamilyFlatGroups.map(([flatNumber, members]) => (
                   <Fragment key={flatNumber}>
                     <tr key={`group-${flatNumber}`} className="border-b border-stone-200 bg-stone-50">
-                      <td className="px-4 py-2 font-semibold text-stone-800" colSpan={8}>
+                      <td className="px-4 py-2 font-semibold text-stone-800" colSpan={11}>
                         Flat {flatNumber} ({members.length} member{members.length === 1 ? '' : 's'})
                       </td>
                     </tr>
@@ -436,6 +439,9 @@ export function AdminPage() {
                           <td className="px-4 py-3">{m.phone || '—'}</td>
                           <td className="px-4 py-3">{m.birth_date || '—'}</td>
                           <td className="px-4 py-3">{calculateAge(m.birth_date)}</td>
+                          <td className="px-4 py-3">{m.is_rented ? 'Yes' : 'No'}</td>
+                          <td className="px-4 py-3">{m.rent_agreement_status || '—'}</td>
+                          <td className="px-4 py-3">{m.rent_agreement_end_date || '—'}</td>
                           <td className="px-4 py-3">
                             {addedByProfile
                               ? `${addedByProfile.full_name} (${addedByProfile.flat_number || '—'})`

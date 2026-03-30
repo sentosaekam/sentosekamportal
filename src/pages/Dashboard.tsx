@@ -25,6 +25,9 @@ export function DashboardPage() {
   const [fmRelation, setFmRelation] = useState('')
   const [fmPhone, setFmPhone] = useState('')
   const [fmBirthDate, setFmBirthDate] = useState('')
+  const [fmIsRented, setFmIsRented] = useState(false)
+  const [fmAgreementStatus, setFmAgreementStatus] = useState('')
+  const [fmAgreementEndDate, setFmAgreementEndDate] = useState('')
   const [fmSaving, setFmSaving] = useState(false)
 
   useEffect(() => {
@@ -72,6 +75,9 @@ export function DashboardPage() {
       relation: fmRelation.trim() || null,
       phone: fmPhone.trim() || null,
       birth_date: fmBirthDate || null,
+      is_rented: fmIsRented,
+      rent_agreement_status: fmIsRented ? fmAgreementStatus.trim() || null : null,
+      rent_agreement_end_date: fmIsRented ? fmAgreementEndDate || null : null,
     })
     setFmSaving(false)
     if (error) {
@@ -82,6 +88,9 @@ export function DashboardPage() {
     setFmRelation('')
     setFmPhone('')
     setFmBirthDate('')
+    setFmIsRented(false)
+    setFmAgreementStatus('')
+    setFmAgreementEndDate('')
     await loadFamilyMembers(profile.id)
   }
 
@@ -223,6 +232,40 @@ export function DashboardPage() {
               onChange={(e) => setFmBirthDate(e.target.value)}
             />
           </div>
+          <div className="flex items-end">
+            <label className="inline-flex items-center gap-2 text-sm font-medium text-stone-700">
+              <input
+                type="checkbox"
+                checked={fmIsRented}
+                onChange={(e) => setFmIsRented(e.target.checked)}
+              />
+              Rented family
+            </label>
+          </div>
+          {fmIsRented && (
+            <>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-stone-700">
+                  Rent agreement status
+                </label>
+                <Input
+                  value={fmAgreementStatus}
+                  onChange={(e) => setFmAgreementStatus(e.target.value)}
+                  placeholder="Active / Expiring / Expired"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-sm font-medium text-stone-700">
+                  Agreement last day
+                </label>
+                <Input
+                  type="date"
+                  value={fmAgreementEndDate}
+                  onChange={(e) => setFmAgreementEndDate(e.target.value)}
+                />
+              </div>
+            </>
+          )}
           <div className="sm:col-span-4">
             <Button type="submit" disabled={fmSaving}>
               {fmSaving ? t('common.loading') : 'Add Member Record'}
@@ -239,6 +282,9 @@ export function DashboardPage() {
                   <span>
                     <strong>{m.name}</strong> — {m.relation || '—'} — {m.phone || '—'} — DOB:{' '}
                     {m.birth_date || '—'} — Age: {getAgeText(m.birth_date)}
+                    {m.is_rented
+                      ? ` — Rented: Yes — Agreement: ${m.rent_agreement_status || '—'} — Last day: ${m.rent_agreement_end_date || '—'}`
+                      : ' — Rented: No'}
                   </span>
                   <Button variant="danger" onClick={() => void deleteFamilyMember(m.id)}>
                     {t('common.delete')}

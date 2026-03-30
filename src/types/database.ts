@@ -27,6 +27,7 @@ export interface Vehicle {
   flat_number: string
   registration_number: string
   vehicle_type: string | null
+  parking_location?: 'basement' | 'ground_floor' | null
   created_at: string
 }
 
@@ -73,5 +74,8 @@ export interface FamilyMember {
   relation: string | null
   phone: string | null
   birth_date?: string | null
+  is_rented?: boolean
+  rent_agreement_status?: string | null
+  rent_agreement_end_date?: string | null
   created_at: string
 }

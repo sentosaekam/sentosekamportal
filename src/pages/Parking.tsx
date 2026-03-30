@@ -15,6 +15,7 @@ export function ParkingPage() {
   const [loading, setLoading] = useState(true)
   const [reg, setReg] = useState('')
   const [vtype, setVtype] = useState('')
+  const [parkingLocation, setParkingLocation] = useState<'basement' | 'ground_floor'>('basement')
   const [error, setError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
 
@@ -56,6 +57,7 @@ export function ParkingPage() {
       flat_number: flat,
       registration_number: reg.trim().toUpperCase(),
       vehicle_type: vtype.trim() || null,
+      parking_location: parkingLocation,
     })
     setSaving(false)
     if (err) {
@@ -68,6 +70,7 @@ export function ParkingPage() {
     }
     setReg('')
     setVtype('')
+    setParkingLocation('basement')
     void load()
   }
 
@@ -122,6 +125,18 @@ export function ParkingPage() {
             </label>
             <Input value={vtype} onChange={(e) => setVtype(e.target.value)} disabled={!canAdd} />
           </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-stone-700">Parking location</label>
+            <select
+              value={parkingLocation}
+              onChange={(e) => setParkingLocation(e.target.value as 'basement' | 'ground_floor')}
+              disabled={!canAdd}
+              className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2.5 text-stone-900"
+            >
+              <option value="basement">Basement</option>
+              <option value="ground_floor">Ground floor</option>
+            </select>
+          </div>
           {error && (
             <p className="text-sm text-red-600" role="alert">
               {error}
@@ -150,6 +165,9 @@ export function ParkingPage() {
                   {v.vehicle_type && (
                     <p className="text-sm text-stone-600">{v.vehicle_type}</p>
                   )}
+                  <p className="text-sm text-stone-600">
+                    Parking: {v.parking_location === 'ground_floor' ? 'Ground floor' : 'Basement'}
+                  </p>
                 </div>
                 {(v.user_id === user?.id || profile?.role === 'admin') && (
                   <Button variant="danger" onClick={() => void remove(v.id)}>

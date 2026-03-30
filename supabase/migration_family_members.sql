@@ -10,6 +10,9 @@ create table if not exists public.family_members (
   relation text,
   phone text,
   birth_date date,
+  is_rented boolean not null default false,
+  rent_agreement_status text,
+  rent_agreement_end_date date,
   created_at timestamptz not null default now()
 );
 
